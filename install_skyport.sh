@@ -111,6 +111,7 @@ install_nodejs_actual() {
 
 install_panel() {
   echo "Installing Skyport Panel..."
+  sudo apt install git
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
@@ -149,7 +150,7 @@ npm run createUser
 
 install_daemon() {
   echo "Installing Skyport Daemon..."
-
+  sudo apt install git
   sudo git clone https://github.com/skyportlabs/skyportd /var/www/skyport/daemon
   check_error "Cloning Skyport Daemon repository"
 
