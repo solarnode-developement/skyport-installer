@@ -108,34 +108,6 @@ install_nodejs_actual() {
   echo "Node.js version $(node -v) installed."
 }
 
-install_expect() {
-  if ! command -v expect &> /dev/null; then
-    echo "Installing expect..."
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-      case "$ID" in
-        ubuntu|debian)
-          sudo apt-get update
-          sudo apt-get install -y expect
-          ;;
-        centos)
-          sudo yum install -y expect
-          ;;
-        *)
-          echo "Error: Unsupported Linux distribution. Exiting..."
-          exit 1
-          ;;
-      esac
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-      brew install expect
-    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-      choco install expect -y
-    fi
-    check_error "Expect installation"
-    echo "Expect installed."
-  else
-    echo "Expect is already installed."
-  fi
-}
 
 install_panel() {
   echo "Installing Skyport Panel..."
@@ -320,7 +292,6 @@ while true; do
   case $choice in
     1)
       install_nodejs
-      install_expect
       install_panel
       ;;
     2)
@@ -329,7 +300,6 @@ while true; do
       ;;
     3)
       install_nodejs
-      install_expect
       install_panel
       install_daemon
       ;;
