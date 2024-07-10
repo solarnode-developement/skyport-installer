@@ -74,7 +74,7 @@ install_panel() {
 
   # Install dependencies
   cd /var/www/skyport/panel
-  sudo npm install
+  npm install
   check_error
 
   # Configure panel
@@ -104,7 +104,7 @@ install_daemon() {
 
   # Install dependencies
   cd /var/www/skyport/daemon
-  sudo npm install
+  npm install
   check_error
 
   # Configure daemon
