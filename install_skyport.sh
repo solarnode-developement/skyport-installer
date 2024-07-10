@@ -172,6 +172,8 @@ EOF
   sudo pm2 startup
   check_error
 
+  # Check and open firewall ports
+  check_and_open_firewall_ports $panel_port
   echo "Skyport Panel installation complete."
   read -p "Press Enter to continue..."
 }
@@ -225,8 +227,28 @@ EOL
   sudo pm2 save
   check_error
 
+  # Check and open firewall ports
+  check_and_open_firewall_ports $daemon_port $ftp_port
   echo "Skyport Daemon installation complete."
   read -p "Press Enter to continue..."
+}
+
+# Function to check and open firewall ports
+check_and_open_firewall_ports() {
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    echo "Checking firewall status..."
+    sudo systemctl status ufw | grep -q inactive
+    if [ $? -eq 0 ]; then
+      echo "Firewall is inactive. Skipping port configuration."
+    else
+      for port in "$@"; do
+        echo "Opening port $port in firewall..."
+        sudo ufw allow $port
+      done
+    fi
+  else
+    echo "Firewall configuration not supported on this OS."
+  fi
 }
 
 # Function to uninstall Skyport Panel
