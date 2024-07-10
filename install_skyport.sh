@@ -30,13 +30,29 @@ install_nodejs() {
         if [[ -f /etc/os-release ]]; then
           source /etc/os-release
           case "$ID" in
-            ubuntu|debian)
-              curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-              sudo apt-get install -y nodejs
+            ubuntu)
+              if [[ "$VERSION_ID" == "24.04" || "$VERSION_ID" == "22.04" ]]; then
+                echo "Ubuntu $VERSION_ID is supported."
+              else
+                echo "Ubuntu $VERSION_ID is not supported."
+                exit 1
+              fi
+              ;;
+            debian)
+              if [[ "$VERSION_ID" == "11" || "$VERSION_ID" == "12" ]]; then
+                echo "Debian $VERSION_ID is supported."
+              else
+                echo "Debian $VERSION_ID is not supported."
+                exit 1
+              fi
               ;;
             centos)
-              curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
-              sudo yum install -y nodejs
+              if [[ "$VERSION_ID" == "7" || "$VERSION_ID" == "8" ]]; then
+                echo "CentOS $VERSION_ID is supported."
+              else
+                echo "CentOS $VERSION_ID is not supported."
+                exit 1
+              fi
               ;;
             *)
               echo "Unsupported Linux distribution. Exiting..."
@@ -49,13 +65,22 @@ install_nodejs() {
         fi
       elif [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS installation commands
-        brew install node@20
+        if [[ $(sw_vers -productVersion | cut -d '.' -f 2) -ge 15 ]]; then
+          echo "macOS $(sw_vers -productVersion) is supported."
+        else
+          echo "Unsupported macOS version. Exiting..."
+          exit 1
+        fi
       elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
         # Windows installation commands (using Chocolatey)
-        choco install nodejs-lts -y --version 20
+        echo "Windows is supported."
+      else
+        echo "Unsupported operating system. Exiting..."
+        exit 1
       fi
-      check_error
-      echo "Node.js version $(node -v) installed."
+
+      # Install Node.js
+      install_nodejs_actual
     else
       echo "Node.js is required for this script to run. Exiting..."
       exit 1
@@ -63,6 +88,32 @@ install_nodejs() {
   else
     echo "Node.js version $(node -v) is already installed."
   fi
+}
+
+# Function to install Node.js based on OS
+install_nodejs_actual() {
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    case "$ID" in
+      ubuntu|debian)
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+        ;;
+      centos)
+        curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo -E bash -
+        sudo yum install -y nodejs
+        ;;
+      *)
+        echo "Unsupported Linux distribution. Exiting..."
+        exit 1
+        ;;
+    esac
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    brew install node@20
+  elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    choco install nodejs-lts -y --version 20
+  fi
+  check_error
+  echo "Node.js version $(node -v) installed."
 }
 
 # Function to install Skyport Panel
@@ -76,6 +127,8 @@ install_panel() {
   cd /var/www/skyport/panel
   npm install
   check_error
+  npm run seed
+  check_error
 
   # Configure panel
   read -p "Enter the Panel port (default 3001): " panel_port
@@ -83,16 +136,44 @@ install_panel() {
   read -p "Enter the Panel domain (default localhost): " panel_domain
   panel_domain=${panel_domain:-localhost}
 
+  # Get version from package.json
+  panel_version=$(npm run -s get-version)
+  check_error
+
   sudo bash -c "cat > /var/www/skyport/panel/config.json" <<EOL
 {
   "port": $panel_port,
   "domain": "$panel_domain",
-  "version": "0.1.0-beta4"
+  "version": "$panel_version"
 }
 EOL
   check_error
 
+  # Prompt for username and password
+  read -p "Enter a username for the Skyport Panel: " username
+  read -s -p "Enter a password for the Skyport Panel: " password
+  echo
+
+  # Create user with expect
+  expect << EOF
+  spawn sudo npm run createUser
+  expect "Enter username:"
+  send "$username\r"
+  expect "Enter password:"
+  send "$password\r"
+  expect eof
+EOF
+  check_error
+
+  # Start the Panel using pm2
+  echo "Starting the Panel with pm2..."
+  sudo pm2 start index.js --name skyport-panel
+  sudo pm2 save
+  sudo pm2 startup
+  check_error
+
   echo "Skyport Panel installation complete."
+  read -p "Press Enter to continue..."
 }
 
 # Function to install Skyport Daemon (Wings)
@@ -103,6 +184,8 @@ install_daemon() {
   check_error
 
   # Install dependencies
+  curl -sSL https://get.docker.com/ | CHANNEL=stable bash
+  sudo mkdir -p /etc/apt/keyrings
   cd /var/www/skyport/daemon
   npm install
   check_error
@@ -118,6 +201,10 @@ install_daemon() {
   read -p "Enter the FTP port (default 3002): " ftp_port
   ftp_port=${ftp_port:-3002}
 
+  # Get version from package.json
+  daemon_version=$(npm run -s get-version)
+  check_error
+
   sudo bash -c "cat > /var/www/skyport/daemon/config.json" <<EOL
 {
   "remote": "$daemon_remote",
@@ -127,26 +214,39 @@ install_daemon() {
     "ip": "$ftp_ip",
     "port": $ftp_port
   },
-  "version": "0.1.0-beta4"
+  "version": "$daemon_version"
 }
 EOL
   check_error
 
+  # Start the Daemon using pm2
+  echo "Starting the Daemon with pm2..."
+  sudo pm2 start index.js --name skyport-daemon
+  sudo pm2 save
+  check_error
+
   echo "Skyport Daemon installation complete."
+  read -p "Press Enter to continue..."
 }
 
 # Function to uninstall Skyport Panel
 uninstall_panel() {
   echo "Uninstalling Skyport Panel..."
+  sudo pm2 stop skyport-panel
+  sudo pm2 delete skyport-panel
   sudo rm -rf /var/www/skyport/panel
   echo "Skyport Panel uninstalled."
+  read -p "Press Enter to continue..."
 }
 
 # Function to uninstall Skyport Daemon (Wings)
 uninstall_daemon() {
   echo "Uninstalling Skyport Daemon..."
+  sudo pm2 stop skyport-daemon
+  sudo pm2 delete skyport-daemon
   sudo rm -rf /var/www/skyport/daemon
   echo "Skyport Daemon uninstalled."
+  read -p "Press Enter to continue..."
 }
 
 # Function to update Skyport Panel
@@ -157,7 +257,9 @@ update_panel() {
   check_error
   sudo npm install
   check_error
+  sudo pm2 restart skyport-panel
   echo "Skyport Panel updated."
+  read -p "Press Enter to continue..."
 }
 
 # Function to update Skyport Daemon (Wings)
@@ -168,11 +270,14 @@ update_daemon() {
   check_error
   sudo npm install
   check_error
+  sudo pm2 restart skyport-daemon
   echo "Skyport Daemon updated."
+  read -p "Press Enter to continue..."
 }
 
 # Display menu
 while true; do
+  clear
   show_info
   echo "Choose an option:"
   echo "1: Install Skyport Panel"
@@ -213,10 +318,12 @@ while true; do
       ;;
     8)
       echo "Exiting..."
-      break
+      exit 0
       ;;
     *)
       echo "Invalid choice"
       ;;
   esac
+
+  read -p "Press Enter to return to the menu..."
 done
