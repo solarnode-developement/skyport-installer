@@ -137,8 +137,12 @@ install_panel() {
   panel_domain=${panel_domain:-localhost}
 
   # Get version from package.json
-  panel_version=$(npm run -s get-version)
-  check_error "Retrieving version for Skyport Panel"
+  panel_version=$(npm run -s get-version || echo "unknown")
+  if [ "$panel_version" == "unknown" ]; then
+    echo "Warning: Could not retrieve version for Skyport Panel. Proceeding with installation."
+  else
+    echo "Panel version: $panel_version"
+  fi
 
   if [ ! -d "/var/www/skyport/panel" ]; then
     echo "Error: /var/www/skyport/panel directory does not exist."
@@ -215,8 +219,12 @@ install_daemon() {
   ftp_port=${ftp_port:-3002}
 
   # Get version from package.json
-  daemon_version=$(npm run -s get-version)
-  check_error "Retrieving version for Skyport Daemon"
+  daemon_version=$(npm run -s get-version || echo "unknown")
+  if [ "$daemon_version" == "unknown" ]; then
+    echo "Warning: Could not retrieve version for Skyport Daemon. Proceeding with installation."
+  else
+    echo "Daemon version: $daemon_version"
+  fi
 
   sudo bash -c "cat > /var/www/skyport/daemon/config.json" <<EOL
 {
