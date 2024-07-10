@@ -138,7 +138,18 @@ install_panel() {
 
   # Get version from package.json
   panel_version=$(npm run -s get-version)
-  check_error "Configuring Skyport Panel"
+  check_error "Retrieving version for Skyport Panel"
+
+  if [ ! -d "/var/www/skyport/panel" ]; then
+    echo "Error: /var/www/skyport/panel directory does not exist."
+    exit 1
+  fi
+
+  # Check write permissions
+  if [ ! -w "/var/www/skyport/panel" ]; then
+    echo "Error: No write permissions for /var/www/skyport/panel."
+    exit 1
+  fi
 
   sudo bash -c "cat > /var/www/skyport/panel/config.json" <<EOL
 {
@@ -205,7 +216,7 @@ install_daemon() {
 
   # Get version from package.json
   daemon_version=$(npm run -s get-version)
-  check_error "Configuring Skyport Daemon"
+  check_error "Retrieving version for Skyport Daemon"
 
   sudo bash -c "cat > /var/www/skyport/daemon/config.json" <<EOL
 {
@@ -225,6 +236,7 @@ EOL
   echo "Starting the Daemon with pm2..."
   sudo pm2 start index.js --name skyport-daemon
   sudo pm2 save
+  sudo pm2 startup
   check_error "Starting Skyport Daemon with pm2"
 
   # Check and open firewall ports
@@ -236,11 +248,7 @@ EOL
 # Function to check and open firewall ports
 check_and_open_firewall_ports() {
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo "Checking firewall status..."
-    sudo systemctl status ufw | grep -q inactive
-    if [ $? -eq 0 ]; then
-      echo "Firewall is inactive. Skipping port configuration."
-    else
+    if command -v ufw &> /dev/null; then
       for port in "$@"; do
         echo "Opening port $port in firewall..."
         sudo ufw allow $port
