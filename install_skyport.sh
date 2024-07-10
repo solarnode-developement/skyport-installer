@@ -238,7 +238,7 @@ update_panel() {
 
   echo "Removing all files except skyport.db..."
   shopt -s extglob
-  rm -rf !(skyport.db)
+  sudo rm -rf !(skyport.db)
   shopt -u extglob
   check_error "Removing old files in Skyport Panel directory"
 
