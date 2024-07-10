@@ -179,19 +179,7 @@ install_panel() {
 EOL
   check_error "Writing config.json for Skyport Panel"
 
-  read -p "Enter a username for the Skyport Panel: " username
-  read -s -p "Enter a password for the Skyport Panel: " password
-  echo
-
-  expect << EOF
-  spawn npm run createUser
-  expect "Enter username:"
-  send "$username\r"
-  expect "Enter password:"
-  send "$password\r"
-  expect eof
-EOF
-  check_error "Creating user for Skyport Panel"
+npm run createUser
 
   echo "Starting the Panel with pm2..."
   sudo pm2 start index.js --name skyport-panel
