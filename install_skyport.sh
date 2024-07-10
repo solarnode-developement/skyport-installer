@@ -363,6 +363,7 @@ while true; do
   case $choice in
     1)
       install_nodejs
+      install_expect
       install_panel
       ;;
     2)
@@ -371,6 +372,7 @@ while true; do
       ;;
     3)
       install_nodejs
+      install_expect
       install_panel
       install_daemon
       ;;
