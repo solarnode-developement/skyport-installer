@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 show_info() {
   echo "===================================================="
   echo " Skyport Panel and Daemon Installer Script"
@@ -12,7 +11,6 @@ show_info() {
   echo "===================================================="
 }
 
-
 check_error() {
   if [ $? -ne 0 ]; then
     echo "Error: $1. Exiting..."
@@ -20,13 +18,11 @@ check_error() {
   fi
 }
 
-
 install_nodejs() {
   if ! command -v node &> /dev/null; then
     read -p "Node.js is not installed. Would you like to install it now? (y/n): " install_node
     if [ "$install_node" == "y" ]; then
       if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        
         if [[ -f /etc/os-release ]]; then
           source /etc/os-release
           case "$ID" in
@@ -64,7 +60,6 @@ install_nodejs() {
           exit 1
         fi
       elif [[ "$OSTYPE" == "darwin"* ]]; then
-        
         if [[ $(sw_vers -productVersion | cut -d '.' -f 2) -ge 15 ]]; then
           echo "macOS $(sw_vers -productVersion) is supported."
         else
@@ -72,14 +67,12 @@ install_nodejs() {
           exit 1
         fi
       elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        
         echo "Windows is supported."
       else
         echo "Error: Unsupported operating system. Exiting..."
         exit 1
       fi
 
-      
       install_nodejs_actual
     else
       echo "Error: Node.js is required for this script to run. Exiting..."
@@ -89,7 +82,6 @@ install_nodejs() {
     echo "Node.js version $(node -v) is already installed."
   fi
 }
-
 
 install_nodejs_actual() {
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -115,7 +107,6 @@ install_nodejs_actual() {
   check_error "Node.js installation"
   echo "Node.js version $(node -v) installed."
 }
-
 
 install_expect() {
   if ! command -v expect &> /dev/null; then
@@ -146,26 +137,21 @@ install_expect() {
   fi
 }
 
-
 install_panel() {
   echo "Installing Skyport Panel..."
- 
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
-  
   cd /var/www/skyport/panel
   npm install
   check_error "Installing npm dependencies for Skyport Panel"
   npm run seed
   check_error "Running seed for Skyport Panel"
 
-
   read -p "Enter the Panel port (default 3001): " panel_port
   panel_port=${panel_port:-3001}
   read -p "Enter the Panel domain (default localhost): " panel_domain
   panel_domain=${panel_domain:-localhost}
-
 
   panel_version=$(npm run -s get-version || echo "unknown")
   if [ "$panel_version" == "unknown" ]; then
@@ -178,7 +164,6 @@ install_panel() {
     echo "Error: /var/www/skyport/panel directory does not exist."
     exit 1
   fi
-
 
   if [ ! -w "/var/www/skyport/panel" ]; then
     echo "Error: No write permissions for /var/www/skyport/panel."
@@ -194,11 +179,9 @@ install_panel() {
 EOL
   check_error "Writing config.json for Skyport Panel"
 
-
   read -p "Enter a username for the Skyport Panel: " username
   read -s -p "Enter a password for the Skyport Panel: " password
   echo
-
 
   expect << EOF
   spawn npm run createUser
@@ -210,19 +193,16 @@ EOL
 EOF
   check_error "Creating user for Skyport Panel"
 
-
   echo "Starting the Panel with pm2..."
   sudo pm2 start index.js --name skyport-panel
   sudo pm2 save
   sudo pm2 startup
   check_error "Starting Skyport Panel with pm2"
 
-
   check_and_open_firewall_ports $panel_port
   echo "Skyport Panel installation complete."
   read -p "Press Enter to continue..."
 }
-
 
 install_daemon() {
   echo "Installing Skyport Daemon..."
@@ -230,13 +210,11 @@ install_daemon() {
   sudo git clone https://github.com/skyportlabs/skyportd /var/www/skyport/daemon
   check_error "Cloning Skyport Daemon repository"
 
-
   curl -sSL https://get.docker.com/ | CHANNEL=stable bash
   sudo mkdir -p /etc/apt/keyrings
   cd /var/www/skyport/daemon
   npm install
   check_error "Installing npm dependencies for Skyport Daemon"
-
 
   read -p "Enter the Panel's remote URL (default http://localhost:3001): " daemon_remote
   daemon_remote=${daemon_remote:-http://localhost:3001}
@@ -247,7 +225,6 @@ install_daemon() {
   ftp_ip=${ftp_ip:-localhost}
   read -p "Enter the FTP port (default 3002): " ftp_port
   ftp_port=${ftp_port:-3002}
-
 
   daemon_version=$(npm run -s get-version || echo "unknown")
   if [ "$daemon_version" == "unknown" ]; then
@@ -270,19 +247,16 @@ install_daemon() {
 EOL
   check_error "Writing config.json for Skyport Daemon"
 
-  
   echo "Starting the Daemon with pm2..."
   sudo pm2 start index.js --name skyport-daemon
   sudo pm2 save
   sudo pm2 startup
   check_error "Starting Skyport Daemon with pm2"
 
-  
   check_and_open_firewall_ports $daemon_port $ftp_port
   echo "Skyport Daemon installation complete."
   read -p "Press Enter to continue..."
 }
-
 
 check_and_open_firewall_ports() {
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -297,7 +271,6 @@ check_and_open_firewall_ports() {
   fi
 }
 
-
 uninstall_panel() {
   echo "Uninstalling Skyport Panel..."
   sudo pm2 stop skyport-panel
@@ -307,7 +280,6 @@ uninstall_panel() {
   read -p "Press Enter to continue..."
 }
 
-
 uninstall_daemon() {
   echo "Uninstalling Skyport Daemon..."
   sudo pm2 stop skyport-daemon
@@ -316,7 +288,6 @@ uninstall_daemon() {
   echo "Skyport Daemon uninstalled."
   read -p "Press Enter to continue..."
 }
-
 
 update_panel() {
   echo "Updating Skyport Panel..."
@@ -331,7 +302,6 @@ update_panel() {
   read -p "Press Enter to continue..."
 }
 
-
 update_daemon() {
   echo "Updating Skyport Daemon..."
   cd /var/www/skyport/daemon
@@ -344,7 +314,6 @@ update_daemon() {
   echo "Skyport Daemon updated."
   read -p "Press Enter to continue..."
 }
-
 
 while true; do
   clear
