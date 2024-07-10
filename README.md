@@ -5,7 +5,7 @@
 
 Unofficial scripts for installing Skyport Panel & Wings. Works with the latest version of Skyport!
 
-Read more about [Pterodactyl](https://skyport.dev/) here. This script is not associated with the official Skyport Project.
+Read more about [Skyport](https://skyport.dev/) here. This script is not associated with the official Skyport Project.
 
 ## Features
 
