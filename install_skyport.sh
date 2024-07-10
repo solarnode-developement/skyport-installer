@@ -15,7 +15,7 @@ show_info() {
 # Function to check for errors
 check_error() {
   if [ $? -ne 0 ]; then
-    echo "An error occurred during the previous step. Exiting..."
+    echo "Error: $1. Exiting..."
     exit 1
   fi
 }
@@ -34,7 +34,7 @@ install_nodejs() {
               if [[ "$VERSION_ID" == "24.04" || "$VERSION_ID" == "22.04" ]]; then
                 echo "Ubuntu $VERSION_ID is supported."
               else
-                echo "Ubuntu $VERSION_ID is not supported."
+                echo "Error: Ubuntu $VERSION_ID is not supported."
                 exit 1
               fi
               ;;
@@ -42,7 +42,7 @@ install_nodejs() {
               if [[ "$VERSION_ID" == "11" || "$VERSION_ID" == "12" ]]; then
                 echo "Debian $VERSION_ID is supported."
               else
-                echo "Debian $VERSION_ID is not supported."
+                echo "Error: Debian $VERSION_ID is not supported."
                 exit 1
               fi
               ;;
@@ -50,17 +50,17 @@ install_nodejs() {
               if [[ "$VERSION_ID" == "7" || "$VERSION_ID" == "8" ]]; then
                 echo "CentOS $VERSION_ID is supported."
               else
-                echo "CentOS $VERSION_ID is not supported."
+                echo "Error: CentOS $VERSION_ID is not supported."
                 exit 1
               fi
               ;;
             *)
-              echo "Unsupported Linux distribution. Exiting..."
+              echo "Error: Unsupported Linux distribution. Exiting..."
               exit 1
               ;;
           esac
         else
-          echo "Unsupported Linux distribution. Exiting..."
+          echo "Error: Unsupported Linux distribution. Exiting..."
           exit 1
         fi
       elif [[ "$OSTYPE" == "darwin"* ]]; then
@@ -68,21 +68,21 @@ install_nodejs() {
         if [[ $(sw_vers -productVersion | cut -d '.' -f 2) -ge 15 ]]; then
           echo "macOS $(sw_vers -productVersion) is supported."
         else
-          echo "Unsupported macOS version. Exiting..."
+          echo "Error: Unsupported macOS version. Exiting..."
           exit 1
         fi
       elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
         # Windows installation commands (using Chocolatey)
         echo "Windows is supported."
       else
-        echo "Unsupported operating system. Exiting..."
+        echo "Error: Unsupported operating system. Exiting..."
         exit 1
       fi
 
       # Install Node.js
       install_nodejs_actual
     else
-      echo "Node.js is required for this script to run. Exiting..."
+      echo "Error: Node.js is required for this script to run. Exiting..."
       exit 1
     fi
   else
@@ -103,7 +103,7 @@ install_nodejs_actual() {
         sudo yum install -y nodejs
         ;;
       *)
-        echo "Unsupported Linux distribution. Exiting..."
+        echo "Error: Unsupported Linux distribution. Exiting..."
         exit 1
         ;;
     esac
@@ -112,7 +112,7 @@ install_nodejs_actual() {
   elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
     choco install nodejs-lts -y --version 20
   fi
-  check_error
+  check_error "Node.js installation"
   echo "Node.js version $(node -v) installed."
 }
 
@@ -121,30 +121,24 @@ install_panel() {
   echo "Installing Skyport Panel..."
   # Clone repository
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
-  check_error
+  check_error "Cloning Skyport Panel repository"
 
   # Install dependencies
   cd /var/www/skyport/panel
   npm install
-  check_error
+  check_error "Installing npm dependencies for Skyport Panel"
   npm run seed
-  check_error
+  check_error "Running seed for Skyport Panel"
 
   # Configure panel
   read -p "Enter the Panel port (default 3001): " panel_port
-  panel_port=${panel_port:-3001}  # Set default value if no input provided
+  panel_port=${panel_port:-3001}
   read -p "Enter the Panel domain (default localhost): " panel_domain
-  panel_domain=${panel_domain:-localhost}  # Set default value if no input provided
-
-  # Validate if both port and domain are non-empty
-  if [[ -z "$panel_port" || -z "$panel_domain" ]]; then
-    echo "Error: Panel port and domain must be provided."
-    exit 1
-  fi
+  panel_domain=${panel_domain:-localhost}
 
   # Get version from package.json
   panel_version=$(npm run -s get-version)
-  check_error
+  check_error "Configuring Skyport Panel"
 
   sudo bash -c "cat > /var/www/skyport/panel/config.json" <<EOL
 {
@@ -153,7 +147,7 @@ install_panel() {
   "version": "$panel_version"
 }
 EOL
-  check_error
+  check_error "Writing config.json for Skyport Panel"
 
   # Prompt for username and password using expect
   read -p "Enter a username for the Skyport Panel: " username
@@ -169,7 +163,14 @@ EOL
   send "$password\r"
   expect eof
 EOF
-  check_error
+  check_error "Creating user for Skyport Panel"
+
+  # Start the Panel using pm2
+  echo "Starting the Panel with pm2..."
+  sudo pm2 start index.js --name skyport-panel
+  sudo pm2 save
+  sudo pm2 startup
+  check_error "Starting Skyport Panel with pm2"
 
   # Check and open firewall ports
   check_and_open_firewall_ports $panel_port
@@ -182,14 +183,14 @@ install_daemon() {
   echo "Installing Skyport Daemon..."
   # Clone repository
   sudo git clone https://github.com/skyportlabs/skyportd /var/www/skyport/daemon
-  check_error
+  check_error "Cloning Skyport Daemon repository"
 
   # Install dependencies
   curl -sSL https://get.docker.com/ | CHANNEL=stable bash
   sudo mkdir -p /etc/apt/keyrings
   cd /var/www/skyport/daemon
   npm install
-  check_error
+  check_error "Installing npm dependencies for Skyport Daemon"
 
   # Configure daemon
   read -p "Enter the Panel's remote URL (default http://localhost:3001): " daemon_remote
@@ -204,7 +205,7 @@ install_daemon() {
 
   # Get version from package.json
   daemon_version=$(npm run -s get-version)
-  check_error
+  check_error "Configuring Skyport Daemon"
 
   sudo bash -c "cat > /var/www/skyport/daemon/config.json" <<EOL
 {
@@ -218,13 +219,13 @@ install_daemon() {
   "version": "$daemon_version"
 }
 EOL
-  check_error
+  check_error "Writing config.json for Skyport Daemon"
 
   # Start the Daemon using pm2
   echo "Starting the Daemon with pm2..."
   sudo pm2 start index.js --name skyport-daemon
   sudo pm2 save
-  check_error
+  check_error "Starting Skyport Daemon with pm2"
 
   # Check and open firewall ports
   check_and_open_firewall_ports $daemon_port $ftp_port
@@ -275,10 +276,11 @@ update_panel() {
   echo "Updating Skyport Panel..."
   cd /var/www/skyport/panel
   sudo git pull origin master
-  check_error
+  check_error "Pulling latest changes for Skyport Panel"
   sudo npm install
-  check_error
+  check_error "Installing npm dependencies for Skyport Panel"
   sudo pm2 restart skyport-panel
+  check_error "Restarting Skyport Panel with pm2"
   echo "Skyport Panel updated."
   read -p "Press Enter to continue..."
 }
@@ -288,10 +290,11 @@ update_daemon() {
   echo "Updating Skyport Daemon..."
   cd /var/www/skyport/daemon
   sudo git pull origin master
-  check_error
+  check_error "Pulling latest changes for Skyport Daemon"
   sudo npm install
-  check_error
+  check_error "Installing npm dependencies for Skyport Daemon"
   sudo pm2 restart skyport-daemon
+  check_error "Restarting Skyport Daemon with pm2"
   echo "Skyport Daemon updated."
   read -p "Press Enter to continue..."
 }
