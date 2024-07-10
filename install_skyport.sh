@@ -138,6 +138,7 @@ EOL
 npm run createUser
 
   echo "Starting the Panel with pm2..."
+  npm install pm2
   pm2 start index.js --name skyport-panel
   pm2 save
   pm2 startup
@@ -185,6 +186,7 @@ EOL
   check_error "Writing config.json for Skyport Daemon"
 
   echo "Starting the Daemon with pm2..."
+  npm install pm2
   pm2 start index.js --name skyport-daemon
   pm2 save
   pm2 startup
