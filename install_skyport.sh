@@ -230,15 +230,33 @@ uninstall_daemon() {
 
 update_panel() {
   echo "Updating Skyport Panel..."
+
   cd /var/www/skyport/panel
-  sudo git pull origin master
-  check_error "Pulling latest changes for Skyport Panel"
+  echo "Backing up skyport.db..."
+  cp skyport.db skyport_backup.db
+  check_error "Backing up skyport.db"
+
+  echo "Removing all files except skyport.db..."
+  shopt -s extglob
+  rm -rf !(skyport.db)
+  shopt -u extglob
+  check_error "Removing old files in Skyport Panel directory"
+
+  sudo git clone https://github.com/skyportlabs/panel
+  check_error "Cloning Skyport Panel repository"
+
+  echo "Restoring skyport.db backup..."
+  mv skyport_backup.db skyport.db
+  check_error "Restoring skyport.db backup"
+  
   npm install
-  npm run seed
-  npm run createUser
   check_error "Installing npm dependencies for Skyport Panel"
+  npm run seed
+  check_error "Running seed for Skyport Panel"
+  
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
+  
   echo "Skyport Panel updated."
   read -p "Press Enter to continue..."
 }
