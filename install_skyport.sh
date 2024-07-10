@@ -231,7 +231,7 @@ update_panel() {
   cd /var/www/skyport/panel
   sudo git pull origin master
   check_error "Pulling latest changes for Skyport Panel"
-  sudo npm install
+  npm install
   check_error "Installing npm dependencies for Skyport Panel"
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
@@ -244,7 +244,7 @@ update_daemon() {
   cd /var/www/skyport/daemon
   sudo git pull origin master
   check_error "Pulling latest changes for Skyport Daemon"
-  sudo npm install
+  npm install
   check_error "Installing npm dependencies for Skyport Daemon"
   pm2 restart skyport-daemon
   check_error "Restarting Skyport Daemon with pm2"
