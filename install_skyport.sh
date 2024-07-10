@@ -125,28 +125,11 @@ install_panel() {
   read -p "Enter the Panel domain (default localhost): " panel_domain
   panel_domain=${panel_domain:-localhost}
 
-  panel_version=$(npm run -s get-version || echo "unknown")
-  if [ "$panel_version" == "unknown" ]; then
-    echo "Warning: Could not retrieve version for Skyport Panel. Proceeding with installation."
-  else
-    echo "Panel version: $panel_version"
-  fi
-
-  if [ ! -d "/var/www/skyport/panel" ]; then
-    echo "Error: /var/www/skyport/panel directory does not exist."
-    exit 1
-  fi
-
-  if [ ! -w "/var/www/skyport/panel" ]; then
-    echo "Error: No write permissions for /var/www/skyport/panel."
-    exit 1
-  fi
-
   sudo bash -c "cat > /var/www/skyport/panel/config.json" <<EOL
 {
   "port": $panel_port,
   "domain": "$panel_domain",
-  "version": "$panel_version"
+  "version": "Latest"
 }
 EOL
   check_error "Writing config.json for Skyport Panel"
@@ -154,9 +137,9 @@ EOL
 npm run createUser
 
   echo "Starting the Panel with pm2..."
-  sudo pm2 start index.js --name skyport-panel
-  sudo pm2 save
-  sudo pm2 startup
+  pm2 start index.js --name skyport-panel
+  pm2 save
+  pm2 startup
   check_error "Starting Skyport Panel with pm2"
 
   check_and_open_firewall_ports $panel_port
@@ -186,13 +169,6 @@ install_daemon() {
   read -p "Enter the FTP port (default 3002): " ftp_port
   ftp_port=${ftp_port:-3002}
 
-  daemon_version=$(npm run -s get-version || echo "unknown")
-  if [ "$daemon_version" == "unknown" ]; then
-    echo "Warning: Could not retrieve version for Skyport Daemon. Proceeding with installation."
-  else
-    echo "Daemon version: $daemon_version"
-  fi
-
   sudo bash -c "cat > /var/www/skyport/daemon/config.json" <<EOL
 {
   "remote": "$daemon_remote",
@@ -202,15 +178,15 @@ install_daemon() {
     "ip": "$ftp_ip",
     "port": $ftp_port
   },
-  "version": "$daemon_version"
+  "version": "Latest"
 }
 EOL
   check_error "Writing config.json for Skyport Daemon"
 
   echo "Starting the Daemon with pm2..."
-  sudo pm2 start index.js --name skyport-daemon
-  sudo pm2 save
-  sudo pm2 startup
+  pm2 start index.js --name skyport-daemon
+  pm2 save
+  pm2 startup
   check_error "Starting Skyport Daemon with pm2"
 
   check_and_open_firewall_ports $daemon_port $ftp_port
@@ -233,8 +209,8 @@ check_and_open_firewall_ports() {
 
 uninstall_panel() {
   echo "Uninstalling Skyport Panel..."
-  sudo pm2 stop skyport-panel
-  sudo pm2 delete skyport-panel
+  pm2 stop skyport-panel
+  pm2 delete skyport-panel
   sudo rm -rf /var/www/skyport/panel
   echo "Skyport Panel uninstalled."
   read -p "Press Enter to continue..."
@@ -242,8 +218,8 @@ uninstall_panel() {
 
 uninstall_daemon() {
   echo "Uninstalling Skyport Daemon..."
-  sudo pm2 stop skyport-daemon
-  sudo pm2 delete skyport-daemon
+  pm2 stop skyport-daemon
+  pm2 delete skyport-daemon
   sudo rm -rf /var/www/skyport/daemon
   echo "Skyport Daemon uninstalled."
   read -p "Press Enter to continue..."
@@ -256,7 +232,7 @@ update_panel() {
   check_error "Pulling latest changes for Skyport Panel"
   sudo npm install
   check_error "Installing npm dependencies for Skyport Panel"
-  sudo pm2 restart skyport-panel
+  pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
   echo "Skyport Panel updated."
   read -p "Press Enter to continue..."
@@ -269,7 +245,7 @@ update_daemon() {
   check_error "Pulling latest changes for Skyport Daemon"
   sudo npm install
   check_error "Installing npm dependencies for Skyport Daemon"
-  sudo pm2 restart skyport-daemon
+  pm2 restart skyport-daemon
   check_error "Restarting Skyport Daemon with pm2"
   echo "Skyport Daemon updated."
   read -p "Press Enter to continue..."
