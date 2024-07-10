@@ -232,6 +232,8 @@ update_panel() {
   sudo git pull origin master
   check_error "Pulling latest changes for Skyport Panel"
   npm install
+  npm run seed
+  npm run createUser
   check_error "Installing npm dependencies for Skyport Panel"
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
@@ -261,7 +263,7 @@ while true; do
   echo "3: Install both Skyport Panel and Daemon"
   echo "4: Uninstall Skyport Panel"
   echo "5: Uninstall Skyport Daemon"
-  echo "6: Update Skyport Panel"
+  echo "6: Update Skyport Panel (Take Database Backup, All Data Reset After Update)"
   echo "7: Update Skyport Daemon"
   echo "8: Exit"
   read -p "Enter your choice [1-8]: " choice
