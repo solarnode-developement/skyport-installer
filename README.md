@@ -43,6 +43,7 @@ List of supported installation setups for panel and Wings (installations support
 |                  | 11      | :white_check_mark: |
 | macOS            | 10.15+  | :white_check_mark: |
 |                  |         |                    |
+
 _\* Indicates an operating system and release that previously was supported by this script._
 
 ## Using the installation scripts
