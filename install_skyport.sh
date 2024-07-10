@@ -156,7 +156,7 @@ EOL
 
   # Create user with expect
   expect << EOF
-  spawn sudo npm run createUser
+  spawn npm run createUser
   expect "Enter username:"
   send "$username\r"
   expect "Enter password:"
