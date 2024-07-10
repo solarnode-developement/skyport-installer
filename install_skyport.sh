@@ -117,18 +117,19 @@ install_nodejs_actual() {
 }
 
 # Function to install Skyport Panel
+# Function to install Skyport Panel
 install_panel() {
   echo "Installing Skyport Panel..."
   # Clone repository
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
-  check_error
+  check_error "Cloning repository failed."
 
   # Install dependencies
   cd /var/www/skyport/panel
   npm install
-  check_error
+  check_error "Installing dependencies failed."
   npm run seed
-  check_error
+  check_error "Seeding database failed."
 
   # Configure panel
   read -p "Enter the Panel port (default 3001): " panel_port
@@ -138,7 +139,7 @@ install_panel() {
 
   # Get version from package.json
   panel_version=$(npm run -s get-version)
-  check_error
+  check_error "Getting version from package.json failed."
 
   sudo bash -c "cat > /var/www/skyport/panel/config.json" <<EOL
 {
@@ -147,30 +148,31 @@ install_panel() {
   "version": "$panel_version"
 }
 EOL
-  check_error
+  check_error "Writing config.json failed."
 
-  # Prompt for username and password
+  # Start the Panel using pm2
+  echo "Starting the Panel with pm2..."
+  sudo pm2 start index.js --name skyport-panel
+  check_error "Starting Panel with pm2 failed."
+  sudo pm2 save
+  sudo pm2 startup
+  check_error "Saving pm2 process failed."
+
+  # Prompt for username and password using expect
   read -p "Enter a username for the Skyport Panel: " username
   read -s -p "Enter a password for the Skyport Panel: " password
   echo
 
   # Create user with expect
   expect << EOF
-  spawn npm run createUser
+  spawn sudo npm run createUser
   expect "Enter username:"
   send "$username\r"
   expect "Enter password:"
   send "$password\r"
   expect eof
 EOF
-  check_error
-
-  # Start the Panel using pm2
-  echo "Starting the Panel with pm2..."
-  sudo pm2 start index.js --name skyport-panel
-  sudo pm2 save
-  sudo pm2 startup
-  check_error
+  check_error "Creating user failed."
 
   # Check and open firewall ports
   check_and_open_firewall_ports $panel_port
