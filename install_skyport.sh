@@ -171,13 +171,6 @@ EOL
 EOF
   check_error
 
-  # Start the Panel using pm2
-  echo "Starting the Panel with pm2..."
-  sudo pm2 start index.js --name skyport-panel
-  sudo pm2 save
-  sudo pm2 startup
-  check_error
-
   # Check and open firewall ports
   check_and_open_firewall_ports $panel_port
   echo "Skyport Panel installation complete."
