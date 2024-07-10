@@ -241,8 +241,15 @@ update_panel() {
   find . -maxdepth 1 -type f ! -name 'skyport.db' -exec rm -f {} +
   check_error "Removing old files in Skyport Panel directory"
 
-  sudo git clone https://github.com/skyportlabs/panel .
-  check_error "Cloning Skyport Panel repository"
+  if [ -z "$(ls -A .)" ]; then
+    sudo git clone https://github.com/skyportlabs/panel .
+    check_error "Cloning Skyport Panel repository"
+  else
+  
+    sudo git fetch origin
+    sudo git reset --hard origin/master
+    check_error "Fetching and resetting Skyport Panel repository"
+  fi
 
   echo "Restoring skyport.db backup..."
   mv skyport_backup.db skyport.db
@@ -252,7 +259,7 @@ update_panel() {
   check_error "Installing npm dependencies for Skyport Panel"
   npm run seed
   check_error "Running seed for Skyport Panel"
-
+  
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
 
