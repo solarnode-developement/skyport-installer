@@ -9,7 +9,7 @@ Read more about [Skyport](https://skyport.dev/) here. This script is not associa
 
 ## Features
 
-- Automatic installation of the Skyport Panel (dependencies, nodejs, configure, nginx).
+- Automatic installation of the Skyport Panel (dependencies, nodejs, configure).
 - Automatic installation of the Skyport Wings.
 - Uninstallation support for both panel and wings.
 
