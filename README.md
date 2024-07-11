@@ -57,9 +57,6 @@ bash <(curl -s https://raw.githubusercontent.com/ismamilahi/skyport-installer/ma
 
 _Note: On some systems, it's required to be already logged in as root before executing the one-line command (where `sudo` is in front of the command does not work)._
 
-Here is a [YouTube video](https://www.youtube.com/) that illustrates the installation process [Not available right now].
-
-
 ## Contributors ✨
 
 Copyright (C) 2023 - 2024, Ismam Ilahi, <ismamilahi@gmail.com>, and contributors!
