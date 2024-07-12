@@ -268,47 +268,44 @@ uninstall_daemon() {
 update_panel() {
   echo "Updating Skyport Panel..."
 
-  cd /var/www/skyport/panel
+  local panel_dir="/var/www/skyport/panel"
+  local backup_dir="/var/www/skyport/backup"
+  local backup_file="skyport_backup.db"
+  local panel_db="skyport.db"
 
-  # Take a backup of skyport.db
-  echo "Backing up skyport.db..."
-  cp skyport.db skyport_backup.db
-  check_error "Backing up skyport.db"
+  cd "$panel_dir" || exit 1
 
-  # Remove all files except skyport.db using find
-  echo "Removing all files except skyport.db..."
-  find . -maxdepth 1 -type f ! -name 'skyport.db' -exec rm -f {} +
-  check_error "Removing old files in Skyport Panel directory"
+  echo "Backing up $panel_db to $backup_dir..."
+  cp "$panel_db" "$backup_dir/$backup_file"
+  check_error "Backing up $panel_db"
 
-  # Check if the directory is empty (except for skyport.db)
-  if [ -z "$(ls -A .)" ]; then
-    # Clone the repository if the directory is empty
-    sudo git clone https://github.com/skyportlabs/panel .
-    check_error "Cloning Skyport Panel repository"
-  else
-    # If not empty, fetch and reset to pull the latest changes
-    sudo git fetch origin
-    sudo git reset --hard origin/main
-    check_error "Fetching and resetting Skyport Panel repository"
+  echo "Removing existing $panel_dir directory..."
+  sudo rm -rf "$panel_dir"
+  check_error "Removing $panel_dir"
+
+  echo "Cloning Skyport Panel repository into $panel_dir..."
+  sudo git clone https://github.com/skyportlabs/panel "$panel_dir"
+  check_error "Cloning Skyport Panel repository"
+
+  echo "Restoring $panel_db from $backup_dir to $panel_dir..."
+  cp "$backup_dir/$backup_file" "$panel_dir/$panel_db"
+  check_error "Restoring $panel_db"
+
+  if [ -f "$backup_dir/$backup_file" ]; then
+    echo "Deleting $backup_file from $backup_dir..."
+    rm "$backup_dir/$backup_file"
+    check_error "Deleting $backup_file from $backup_dir"
   fi
 
-  # Restore the backup of skyport.db
-  echo "Restoring skyport.db backup..."
-  if [ -f skyport_backup.db ]; then
-    mv skyport_backup.db skyport.db
-    check_error "Restoring skyport.db backup"
-  else
-    echo "Error: skyport_backup.db not found. Backup may not have been created."
-    exit 1
-  fi
-
-  # Install dependencies and seed (assuming npm install and seed are required)
-  npm install
+  echo "Installing npm dependencies for Skyport Panel..."
+  npm install --prefix "$panel_dir"
   check_error "Installing npm dependencies for Skyport Panel"
-  npm run seed
+
+  echo "Running seed for Skyport Panel..."
+  npm run seed --prefix "$panel_dir"
   check_error "Running seed for Skyport Panel"
 
-  # Restart Skyport Panel with pm2
+  echo "Restarting Skyport Panel with pm2..."
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
 
