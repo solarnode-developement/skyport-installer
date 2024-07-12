@@ -273,53 +273,45 @@ update_panel() {
   local backup_file="skyport_backup.db"
   local panel_db="skyport.db"
 
-  # Create backup directory if it doesn't exist
   echo "Creating backup directory $backup_dir if it doesn't exist..."
   mkdir -p "$backup_dir"
   check_error "Creating backup directory $backup_dir"
 
-  # Backup skyport.db to /var/www/skyport/backup
   echo "Backing up $panel_db to $backup_dir..."
   cp "$panel_dir/$panel_db" "$backup_dir/$backup_file"
   check_error "Backing up $panel_db"
 
-  # Remove existing /var/www/skyport/panel directory if it exists
   if [ -d "$panel_dir" ]; then
     echo "Removing existing $panel_dir directory..."
     sudo rm -rf "$panel_dir"
     check_error "Removing $panel_dir"
   fi
 
-  # Clone the repository into /var/www/skyport/panel
   echo "Cloning Skyport Panel repository into $panel_dir..."
-  cd 
+  cd
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
-  # Restore the backup of skyport.db to /var/www/skyport/panel
   echo "Restoring $panel_db from $backup_dir to $panel_dir..."
   cp "$backup_dir/$backup_file" "$panel_dir/$panel_db"
   check_error "Restoring $panel_db"
 
-  # Delete skyport.db from /var/www/skyport/backup if it exists
   if [ -f "$backup_dir/$backup_file" ]; then
     echo "Deleting $backup_file from $backup_dir..."
     rm "$backup_dir/$backup_file"
     check_error "Deleting $backup_file from $backup_dir"
   fi
 
-  # Install npm dependencies
   echo "Installing npm dependencies for Skyport Panel..."
   npm install --prefix "$panel_dir"
   check_error "Installing npm dependencies for Skyport Panel"
 
-  # Run seed script
   echo "Running seed for Skyport Panel..."
   npm run seed --prefix "$panel_dir"
   check_error "Running seed for Skyport Panel"
 
-  # Restart Skyport Panel with pm2
   echo "Restarting Skyport Panel with pm2..."
+  cd /var/www/skyport/panel
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
 
