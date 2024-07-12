@@ -274,7 +274,6 @@ update_panel() {
   local backup_dir="/var/www/skyport/backup"
   local backup_file="skyport_backup"
   local panel_db="skyport.db"
-  local config_file="config.json"
 
   echo "Creating backup directory $backup_dir if it doesn't exist..."
   mkdir -p "$backup_dir"
@@ -283,12 +282,6 @@ update_panel() {
   echo "Backing up $panel_db to $backup_dir..."
   cp "$panel_dir/$panel_db" "$backup_dir/$backup_file.db"
   check_error "Backing up $panel_db"
-
-  if [ -f "$panel_dir/$config_file" ]; then
-    echo "Backing up $config_file to $backup_dir..."
-    cp "$panel_dir/$config_file" "$backup_dir/$config_file"
-    check_error "Backing up $config_file"
-  fi
 
   if [ -d "$panel_dir" ]; then
     echo "Removing existing $panel_dir directory..."
@@ -305,22 +298,10 @@ update_panel() {
   cp "$backup_dir/$backup_file.db" "$panel_dir/$panel_db"
   check_error "Restoring $panel_db"
 
-  if [ -f "$backup_dir/$config_file" ]; then
-    echo "Restoring $config_file from $backup_dir to $panel_dir..."
-    cp "$backup_dir/$config_file" "$panel_dir/$config_file"
-    check_error "Restoring $config_file"
-  fi
-
   if [ -f "$backup_dir/$backup_file.db" ]; then
     echo "Deleting $backup_file.db from $backup_dir..."
     rm "$backup_dir/$backup_file.db"
     check_error "Deleting $backup_file.db from $backup_dir"
-  fi
-
-  if [ -f "$backup_dir/$config_file" ]; then
-    echo "Deleting $config_file from $backup_dir..."
-    rm "$backup_dir/$config_file"
-    check_error "Deleting $config_file from $backup_dir"
   fi
 
   echo "Installing npm dependencies for Skyport Panel..."
@@ -340,17 +321,31 @@ update_panel() {
 }
 
 update_daemon() {
-  echo "Updating Skyport Daemon..."
-  cd /var/www/skyport/daemon
-  sudo git pull origin master
-  check_error "Pulling latest changes for Skyport Daemon"
-  npm install
+  echo "Updating Skyport Daemon (Wings)..."
+
+  local daemon_dir="/var/www/skyport/daemon"
+
+  echo "Removing existing $daemon_dir directory..."
+  sudo rm -rf "$daemon_dir"
+  check_error "Removing $daemon_dir"
+
+  echo "Cloning Skyport Daemon repository into $daemon_dir..."
+  cd
+  sudo git clone https://github.com/skyportlabs/skyportd "$daemon_dir"
+  check_error "Cloning Skyport Daemon repository"
+
+  echo "Installing npm dependencies for Skyport Daemon..."
+  npm install --prefix "$daemon_dir"
   check_error "Installing npm dependencies for Skyport Daemon"
-  pm2 restart skyport-daemon
-  check_error "Restarting Skyport Daemon with pm2"
-  echo "Skyport Daemon updated."
+
+  echo "Restarting Skyport Daemon..."
+  cd /var/www/skyport/deamon
+  pm2 restart skyport-deamon
+
+  echo "Skyport Daemon (Wings) updated."
   read -p "Press Enter to continue..."
 }
+
 
 while true; do
   clear
@@ -361,7 +356,7 @@ while true; do
   echo "3: Install both Skyport Panel and Daemon"
   echo "4: Uninstall Skyport Panel"
   echo "5: Uninstall Skyport Daemon"
-  echo "6: Update Skyport Panel (Take Database Backup, All Data Reset After Update)"
+  echo "6: Update Skyport Panel"
   echo "7: Update Skyport Daemon"
   echo "8: Exit"
   read -p "Enter your choice [1-8]: " choice
