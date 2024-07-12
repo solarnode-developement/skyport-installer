@@ -9,9 +9,10 @@ Read more about [Skyport](https://skyport.dev/) here. This script is not associa
 
 ## Features
 
-- Automatic installation of the Skyport Panel (dependencies, nodejs, configure).
-- Automatic installation of the Skyport Wings.
-- Uninstallation support for both panel and wings.
+- Automatic installation of the Skyport Panel (nodejs, dependencies, configure).
+- Automatic installation of the Skyport Deamon.
+- Uninstallation support for both panel and deamon.
+- Automatic Update Panel and Deamon
 
 ## Help and support
 
@@ -46,7 +47,7 @@ _\* Indicates an operating system and release that previously was supported by t
 
 ## Using the installation scripts
 
-To use the installation scripts, simply run this command as root. The script will ask you whether you would like to install just the panel, just Wings or both.
+To use the installation scripts, simply run this command as root. The script will ask you whether you would like to install just the panel, just deamon or both.
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/ismamilahi/skyport-installer/main/install_skyport.sh)
