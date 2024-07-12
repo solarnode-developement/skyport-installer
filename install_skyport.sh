@@ -326,7 +326,6 @@ update_panel() {
   read -p "Press Enter to continue..."
 }
 
-
 update_daemon() {
   echo "Updating Skyport Daemon..."
   cd /var/www/skyport/daemon
