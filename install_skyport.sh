@@ -292,6 +292,7 @@ update_panel() {
 
   # Clone the repository into /var/www/skyport/panel
   echo "Cloning Skyport Panel repository into $panel_dir..."
+  cd 
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
