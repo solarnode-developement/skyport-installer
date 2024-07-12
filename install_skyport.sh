@@ -129,6 +129,7 @@ install_nodejs_actual() {
 install_panel() {
   echo "Installing Skyport Panel..."
   sudo apt install git
+  cd
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
@@ -169,6 +170,7 @@ npm run createUser
 install_daemon() {
   echo "Installing Skyport Daemon..."
   sudo apt install git
+  cd
   sudo git clone https://github.com/skyportlabs/skyportd /var/www/skyport/daemon
   check_error "Cloning Skyport Daemon repository"
 
@@ -270,16 +272,18 @@ update_panel() {
 
   local panel_dir="/var/www/skyport/panel"
   local backup_dir="/var/www/skyport/backup"
-  local backup_file="skyport_backup.db"
+  local backup_file="skyport_backup"
   local panel_db="skyport.db"
+  local config_file="config.json"
 
   echo "Creating backup directory $backup_dir if it doesn't exist..."
   mkdir -p "$backup_dir"
   check_error "Creating backup directory $backup_dir"
 
-  echo "Backing up $panel_db to $backup_dir..."
-  cp "$panel_dir/$panel_db" "$backup_dir/$backup_file"
-  check_error "Backing up $panel_db"
+  echo "Backing up $panel_db and $config_file to $backup_dir..."
+  cp "$panel_dir/$panel_db" "$backup_dir/$backup_file.db"
+  cp "$panel_dir/$config_file" "$backup_dir/$config_file"
+  check_error "Backing up $panel_db and $config_file"
 
   if [ -d "$panel_dir" ]; then
     echo "Removing existing $panel_dir directory..."
@@ -292,14 +296,16 @@ update_panel() {
   sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
-  echo "Restoring $panel_db from $backup_dir to $panel_dir..."
-  cp "$backup_dir/$backup_file" "$panel_dir/$panel_db"
-  check_error "Restoring $panel_db"
+  echo "Restoring $panel_db and $config_file from $backup_dir to $panel_dir..."
+  cp "$backup_dir/$backup_file.db" "$panel_dir/$panel_db"
+  cp "$backup_dir/$config_file" "$panel_dir/$config_file"
+  check_error "Restoring $panel_db and $config_file"
 
-  if [ -f "$backup_dir/$backup_file" ]; then
-    echo "Deleting $backup_file from $backup_dir..."
-    rm "$backup_dir/$backup_file"
-    check_error "Deleting $backup_file from $backup_dir"
+  if [ -f "$backup_dir/$backup_file.db" ]; then
+    echo "Deleting $backup_file.db and $config_file from $backup_dir..."
+    rm "$backup_dir/$backup_file.db"
+    rm "$backup_dir/$config_file"
+    check_error "Deleting $backup_file.db and $config_file from $backup_dir"
   fi
 
   echo "Installing npm dependencies for Skyport Panel..."
@@ -311,7 +317,6 @@ update_panel() {
   check_error "Running seed for Skyport Panel"
 
   echo "Restarting Skyport Panel with pm2..."
-  cd /var/www/skyport/panel
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
 
