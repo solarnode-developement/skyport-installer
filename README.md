@@ -39,9 +39,6 @@ List of supported installation setups for panel and Wings (installations support
 | CentOS           | 6       | :red_circle:       |
 |                  | 7       | :white_check_mark: |
 |                  | 8       | :white_check_mark: |
-| Windows          | 10      | :white_check_mark: |
-|                  | 11      | :white_check_mark: |
-|                  | 7       | :red_circle:       |
 | macOS            | 10.15+  | :white_check_mark: |
 |                  |         |                    |
 
