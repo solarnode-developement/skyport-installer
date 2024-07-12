@@ -280,10 +280,16 @@ update_panel() {
   mkdir -p "$backup_dir"
   check_error "Creating backup directory $backup_dir"
 
-  echo "Backing up $panel_db and $config_file to $backup_dir..."
+  echo "Backing up $panel_db to $backup_dir..."
   cp "$panel_dir/$panel_db" "$backup_dir/$backup_file.db"
-  cp "$panel_dir/$config_file" "$backup_dir/$config_file"
-  check_error "Backing up $panel_db and $config_file"
+  check_error "Backing up $panel_db"
+
+  # Backup config.json only if it exists in the panel directory
+  if [ -f "$panel_dir/$config_file" ]; then
+    echo "Backing up $config_file to $backup_dir..."
+    cp "$panel_dir/$config_file" "$backup_dir/$config_file"
+    check_error "Backing up $config_file"
+  fi
 
   if [ -d "$panel_dir" ]; then
     echo "Removing existing $panel_dir directory..."
@@ -292,20 +298,32 @@ update_panel() {
   fi
 
   echo "Cloning Skyport Panel repository into $panel_dir..."
-  cd
-  sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
+  cd "$panel_dir"
+  sudo git clone https://github.com/skyportlabs/panel .
   check_error "Cloning Skyport Panel repository"
 
-  echo "Restoring $panel_db and $config_file from $backup_dir to $panel_dir..."
+  echo "Restoring $panel_db from $backup_dir to $panel_dir..."
   cp "$backup_dir/$backup_file.db" "$panel_dir/$panel_db"
-  cp "$backup_dir/$config_file" "$panel_dir/$config_file"
-  check_error "Restoring $panel_db and $config_file"
+  check_error "Restoring $panel_db"
+
+  # Restore config.json only if it was backed up
+  if [ -f "$backup_dir/$config_file" ]; then
+    echo "Restoring $config_file from $backup_dir to $panel_dir..."
+    cp "$backup_dir/$config_file" "$panel_dir/$config_file"
+    check_error "Restoring $config_file"
+  fi
 
   if [ -f "$backup_dir/$backup_file.db" ]; then
-    echo "Deleting $backup_file.db and $config_file from $backup_dir..."
+    echo "Deleting $backup_file.db from $backup_dir..."
     rm "$backup_dir/$backup_file.db"
+    check_error "Deleting $backup_file.db from $backup_dir"
+  fi
+
+  # Clean up backup of config.json if it exists
+  if [ -f "$backup_dir/$config_file" ]; then
+    echo "Deleting $config_file from $backup_dir..."
     rm "$backup_dir/$config_file"
-    check_error "Deleting $backup_file.db and $config_file from $backup_dir"
+    check_error "Deleting $config_file from $backup_dir"
   fi
 
   echo "Installing npm dependencies for Skyport Panel..."
