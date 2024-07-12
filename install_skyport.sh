@@ -273,14 +273,12 @@ update_panel() {
   local backup_file="skyport_backup.db"
   local panel_db="skyport.db"
 
-  cd "$panel_dir" || exit 1
-
   echo "Creating backup directory $backup_dir if it doesn't exist..."
   mkdir -p "$backup_dir"
   check_error "Creating backup directory $backup_dir"
 
   echo "Backing up $panel_db to $backup_dir..."
-  cp "$panel_db" "$backup_dir/$backup_file"
+  cp "$panel_dir/$panel_db" "$backup_dir/$backup_file"
   check_error "Backing up $panel_db"
 
   echo "Removing existing $panel_dir directory..."
