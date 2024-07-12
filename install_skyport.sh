@@ -275,6 +275,10 @@ update_panel() {
 
   cd "$panel_dir" || exit 1
 
+  echo "Creating backup directory $backup_dir if it doesn't exist..."
+  mkdir -p "$backup_dir"
+  check_error "Creating backup directory $backup_dir"
+
   echo "Backing up $panel_db to $backup_dir..."
   cp "$panel_db" "$backup_dir/$backup_file"
   check_error "Backing up $panel_db"
