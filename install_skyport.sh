@@ -233,6 +233,16 @@ uninstall_panel() {
   pm2 delete skyport-panel
   sudo rm -rf /var/www/skyport/panel
   echo "Skyport Panel uninstalled."
+
+  panel_port=$(sudo jq -r '.port' /var/www/skyport/panel/config.json 2>/dev/null)
+
+  if [[ -n "$panel_port" ]]; then
+    echo "Deleting firewall rule for panel port $panel_port..."
+    sudo ufw delete allow $panel_port
+  else
+    echo "No specific panel port found in config.json. Skipping firewall rule deletion."
+  fi
+
   read -p "Press Enter to continue..."
 }
 
@@ -242,6 +252,16 @@ uninstall_daemon() {
   pm2 delete skyport-daemon
   sudo rm -rf /var/www/skyport/daemon
   echo "Skyport Daemon uninstalled."
+
+  daemon_port=$(sudo jq -r '.port' /var/www/skyport/daemon/config.json 2>/dev/null)
+
+  if [[ -n "$daemon_port" ]]; then
+    echo "Deleting firewall rule for daemon port $daemon_port..."
+    sudo ufw delete allow $daemon_port
+  else
+    echo "No specific daemon port found in config.json. Skipping firewall rule deletion."
+  fi
+
   read -p "Press Enter to continue..."
 }
 
@@ -250,40 +270,33 @@ update_panel() {
 
   cd /var/www/skyport/panel
 
-  # Take a backup of skyport.db
   echo "Backing up skyport.db..."
   cp skyport.db skyport_backup.db
   check_error "Backing up skyport.db"
 
-  # Remove all files except skyport.db using find
   echo "Removing all files except skyport.db..."
   find . -maxdepth 1 -type f ! -name 'skyport.db' -exec rm -f {} +
   check_error "Removing old files in Skyport Panel directory"
 
-  # Check if the directory is empty (except for skyport.db)
   if [ -z "$(ls -A .)" ]; then
-    # Clone the repository if the directory is empty
     sudo git clone https://github.com/skyportlabs/panel .
     check_error "Cloning Skyport Panel repository"
   else
-    # If not empty, fetch and reset to pull the latest changes
     sudo git fetch origin
     sudo git reset --hard origin/main
     check_error "Fetching and resetting Skyport Panel repository"
   fi
-
-  # Restore the backup of skyport.db
+  
   echo "Restoring skyport.db backup..."
+  cd /var/www/skyport/panel
   mv skyport_backup.db skyport.db
   check_error "Restoring skyport.db backup"
 
-  # Install dependencies and seed (assuming npm install and seed are required)
   npm install
   check_error "Installing npm dependencies for Skyport Panel"
   npm run seed
   check_error "Running seed for Skyport Panel"
 
-  # Restart Skyport Panel with pm2
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
 
