@@ -270,33 +270,45 @@ update_panel() {
 
   cd /var/www/skyport/panel
 
+  # Take a backup of skyport.db
   echo "Backing up skyport.db..."
   cp skyport.db skyport_backup.db
   check_error "Backing up skyport.db"
 
+  # Remove all files except skyport.db using find
   echo "Removing all files except skyport.db..."
   find . -maxdepth 1 -type f ! -name 'skyport.db' -exec rm -f {} +
   check_error "Removing old files in Skyport Panel directory"
 
+  # Check if the directory is empty (except for skyport.db)
   if [ -z "$(ls -A .)" ]; then
+    # Clone the repository if the directory is empty
     sudo git clone https://github.com/skyportlabs/panel .
     check_error "Cloning Skyport Panel repository"
   else
+    # If not empty, fetch and reset to pull the latest changes
     sudo git fetch origin
     sudo git reset --hard origin/main
     check_error "Fetching and resetting Skyport Panel repository"
   fi
-  
-  echo "Restoring skyport.db backup..."
-  cd /var/www/skyport/panel
-  mv skyport_backup.db skyport.db
-  check_error "Restoring skyport.db backup"
 
+  # Restore the backup of skyport.db
+  echo "Restoring skyport.db backup..."
+  if [ -f skyport_backup.db ]; then
+    mv skyport_backup.db skyport.db
+    check_error "Restoring skyport.db backup"
+  else
+    echo "Error: skyport_backup.db not found. Backup may not have been created."
+    exit 1
+  fi
+
+  # Install dependencies and seed (assuming npm install and seed are required)
   npm install
   check_error "Installing npm dependencies for Skyport Panel"
   npm run seed
   check_error "Running seed for Skyport Panel"
 
+  # Restart Skyport Panel with pm2
   pm2 restart skyport-panel
   check_error "Restarting Skyport Panel with pm2"
 
