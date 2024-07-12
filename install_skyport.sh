@@ -284,7 +284,6 @@ update_panel() {
   cp "$panel_dir/$panel_db" "$backup_dir/$backup_file.db"
   check_error "Backing up $panel_db"
 
-  # Backup config.json only if it exists in the panel directory
   if [ -f "$panel_dir/$config_file" ]; then
     echo "Backing up $config_file to $backup_dir..."
     cp "$panel_dir/$config_file" "$backup_dir/$config_file"
@@ -306,7 +305,6 @@ update_panel() {
   cp "$backup_dir/$backup_file.db" "$panel_dir/$panel_db"
   check_error "Restoring $panel_db"
 
-  # Restore config.json only if it was backed up
   if [ -f "$backup_dir/$config_file" ]; then
     echo "Restoring $config_file from $backup_dir to $panel_dir..."
     cp "$backup_dir/$config_file" "$panel_dir/$config_file"
@@ -319,7 +317,6 @@ update_panel() {
     check_error "Deleting $backup_file.db from $backup_dir"
   fi
 
-  # Clean up backup of config.json if it exists
   if [ -f "$backup_dir/$config_file" ]; then
     echo "Deleting $config_file from $backup_dir..."
     rm "$backup_dir/$config_file"
