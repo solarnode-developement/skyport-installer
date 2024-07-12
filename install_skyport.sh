@@ -298,8 +298,8 @@ update_panel() {
   fi
 
   echo "Cloning Skyport Panel repository into $panel_dir..."
-  cd "$panel_dir"
-  sudo git clone https://github.com/skyportlabs/panel .
+  cd
+  sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
   echo "Restoring $panel_db from $backup_dir to $panel_dir..."
