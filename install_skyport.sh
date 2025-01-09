@@ -130,7 +130,7 @@ install_panel() {
   echo "Installing Skyport Panel..."
   sudo apt install git
   cd
-  sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
+  sudo git clone https://github.com/privt00/skyportlabspanel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
   cd /var/www/skyport/panel
@@ -171,7 +171,7 @@ install_daemon() {
   echo "Installing Skyport Daemon..."
   sudo apt install git
   cd
-  sudo git clone https://github.com/skyportlabs/skyportd /var/www/skyport/daemon
+  sudo git clone https://github.com/privt00/skyportd /var/www/skyport/daemon
   check_error "Cloning Skyport Daemon repository"
 
   curl -sSL https://get.docker.com/ | CHANNEL=stable bash
@@ -291,7 +291,7 @@ update_panel() {
 
   echo "Cloning Skyport Panel repository into $panel_dir..."
   cd
-  sudo git clone https://github.com/skyportlabs/panel /var/www/skyport/panel
+  sudo git clone https://github.com/privt00/skyportlabspanel /var/www/skyport/panel
   check_error "Cloning Skyport Panel repository"
 
   echo "Restoring $panel_db from $backup_dir to $panel_dir..."
@@ -331,7 +331,7 @@ update_daemon() {
 
   echo "Cloning Skyport Daemon repository into $daemon_dir..."
   cd
-  sudo git clone https://github.com/skyportlabs/skyportd "$daemon_dir"
+  sudo git clone https://github.com/privt00/skyportd "$daemon_dir"
   check_error "Cloning Skyport Daemon repository"
 
   echo "Installing npm dependencies for Skyport Daemon..."
